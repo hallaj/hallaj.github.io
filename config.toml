@@ -1,0 +1,19 @@
+## base configuration
+
+baseURL = "https://www.inu.io"
+languageCode = "en-us"
+title = "inu.io"
+paginate = 3
+theme = "hugo-kiera"
+
+## theme configuration
+pygmentsCodeFences = true
+disqusShortname = "inuio"
+googleAnalytics = ""
+
+[author]
+name = "Muhammad Hallaj"
+github = "hallaj"
+gitlab = "muhammadhallaj"
+linkedin = "hallajs"
+twitter = "hallajs"
