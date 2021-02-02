@@ -1,8 +1,8 @@
 ## base configuration
 
-baseURL = "https://www.inu.io"
+baseURL = "https://www.hallajs.net"
 languageCode = "en-us"
-title = "inu.io"
+title = "hallajs.net"
 paginate = 3
 theme = "hugo-kiera"
 
