@@ -8,12 +8,10 @@ theme = "hugo-kiera"
 
 ## theme configuration
 pygmentsCodeFences = true
-disqusShortname = "inuio"
-googleAnalytics = ""
+enableEmoji = true
 
 [author]
 name = "Muhammad Hallaj"
 github = "hallaj"
 gitlab = "muhammadhallaj"
 linkedin = "hallajs"
-twitter = "hallajs"
