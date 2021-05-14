@@ -1,4 +1,4 @@
-name: Github actions for setting up inu.io's static page
+name: Github actions for setting up hallajs.net's static page
 
 on:
   push:
