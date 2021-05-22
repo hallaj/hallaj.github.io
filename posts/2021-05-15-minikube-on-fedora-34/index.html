@@ -1,0 +1,45 @@
+<!doctype html><html lang=en-us><head><title>minikube on Fedora 34 with podman - hallajs.net</title><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="The HTML5 Herald"><meta name=author content="Muhammad Hallaj"><meta property="og:title" content="minikube on Fedora 34 with podman"><meta property="og:description" content="A while ago, I had encountered issues while trying to run minikube on Fedora 33 with podman. Strangely enough I did not keep notes on what I did to get it to work and when I did a fresh installation on Fedora 34, the old error haunted me back again.
+Leaning from the past mistake, I suppose it&rsquo;s time to start taking notes on what&rsquo;s the error encountered and what did I do to fix it."><meta property="og:type" content="article"><meta property="og:url" content="https://www.hallajs.net/posts/2021-05-15-minikube-on-fedora-34/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2021-05-15T00:00:00+00:00"><meta property="article:modified_time" content="2021-05-15T00:00:00+00:00"><meta name=twitter:card content="summary"><meta name=twitter:title content="minikube on Fedora 34 with podman"><meta name=twitter:description content="A while ago, I had encountered issues while trying to run minikube on Fedora 33 with podman. Strangely enough I did not keep notes on what I did to get it to work and when I did a fresh installation on Fedora 34, the old error haunted me back again.
+Leaning from the past mistake, I suppose it&rsquo;s time to start taking notes on what&rsquo;s the error encountered and what did I do to fix it."><meta name=generator content="Hugo 0.83.1"><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin=anonymous><link rel=stylesheet href=https://www.hallajs.net/fontawesome/css/all.min.css><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Roboto+Slab|Ruda"><link rel=stylesheet type=text/css href=/css/styles.css></head><body><div id=container><header><h1><a href=/>hallajs.net</a></h1><ul id=social-media><li><a href=https://github.com/hallaj title=GitHub><i class="fab fa-github fa-lg"></i></a></li><li><a href=https://gitlab.com/muhammadhallaj title=GitLab><i class="fab fa-gitlab fa-lg"></i></a></li><li><a href=https://linkedin.com/in/hallajs title=LinkedIn><i class="fab fa-linkedin fa-lg"></i></a></li></ul></header><nav><ul></ul></nav><main><article><h1>minikube on Fedora 34 with podman</h1><aside><ul><li><time class=post-date datetime=2021-05-15T00:00:00Z>May 15, 2021</time></li><li><em><a href=/tags/fedora>#fedora</a>
+,
+<a href=/tags/minikube>#minikube</a>
+,
+<a href=/tags/podman>#podman</a></em></li><li>3 minute read</li></ul></aside><p>A while ago, I had encountered issues while trying to run <a href=https://minikube.sigs.k8s.io/docs/>minikube</a> on <a href=https://getfedora.org/>Fedora 33</a> with <a href=https://podman.io/>podman</a>. Strangely enough I did not keep notes on what I did to get it to work and when I did a fresh installation on <a href=https://getfedora.org/>Fedora 34</a>, the old error haunted me back again.</p><p>Leaning from the past mistake, I suppose it&rsquo;s time to start taking notes on what&rsquo;s the error encountered and what did I do to fix it.</p><p>Below are the steps I&rsquo;ve taken to get it installed.</p><ol><li>Step 1; Follow the installation guide of minikube from their <a href=https://minikube.sigs.k8s.io/docs/start/>Get started!</a> page.</li><li>Step 2; Ensure podman&rsquo;s installed on our Fedora 34<pre><code>$ sudo dnf -y install podman
+</code></pre></li><li>Step 3; Since <a href=https://minikube.sigs.k8s.io/docs/>minikube</a> uses <code>podman</code> with passwordless <code>sudo</code>, we&rsquo;ll need to ensure our user has the permission to run <code>podman</code> without sudo<code>sudo</code>. The way I do it is to create a new <code>podman</code> group and have my user added to it.<pre><code>$ sudo groupadd podman
+$ sudo gpasswd -a $USER podman
+$ newgrp podman  # use this if you're lazy to re-login to enable your new group
+$ sudo cat &lt;&lt;eof &gt;/etc/sudoers.d/podman
+%podman ALL=(ALL) NOPASSWD: /usr/bin/podman
+eof
+</code></pre></li><li>Step 4; By using the guide from <a href=https://minikube.sigs.k8s.io/docs/drivers/podman/>minikube&rsquo;s podman driver</a>, the recommended way to start <code>minikube</code> is to execute <code>minikube start --driver=podman --container-runtime=cri-o</code>. Unfortunately for me, if I use just that perimeter, somehow the cluster would not launch.<pre><code>$ minikube start --driver=podman --container-runtime=cri-o
+😄  minikube v1.20.0 on Fedora 34
+✨  Using the podman driver based on user configuration
+..
+..
+stderr:
+        [WARNING Swap]: running with swap on is not supported. Please disable swap
+        [WARNING Service-Kubelet]: kubelet service is not enabled, please run 'systemctl enable kubelet.service'
+error execution phase wait-control-plane: couldn't initialize a Kubernetes cluster
+To see the stack trace of this error execute with --v=5 or higher
+
+💡  Suggestion: Check output of 'journalctl -xeu kubelet', try passing --extra-config=kubelet.cgroup-driver=systemd to minikube start
+🍿  Related issue: https://github.com/kubernetes/minikube/issues/4172
+</code></pre><p>After some digging, it would appear that because we&rsquo;re running <code>btrfs</code>, the mapper device was carried over into podman but couldn&rsquo;t be located. Thankfully, <code>minikube</code> has something to counter that - <code>"LocalStorageCapacityIsolation=false"</code>, so if we use the following, we should be able to deploy a minikube cluster without issues</p><pre><code>$ minikube start --driver=podman --container-runtime=cri-o --feature-gates=&quot;LocalStorageCapacityIsolation=false&quot;
+😄  minikube v1.20.0 on Fedora 34
+..
+..
+🌟  Enabled addons: storage-provisioner, default-storageclass
+🏄  Done! kubectl is now configured to use &quot;minikube&quot; cluster and &quot;default&quot; namespace by default
+</code></pre><p>You could even confirm by running <code>kubectl get pods -A</code> to confirm it&rsquo;s running</p><pre><code>$ kubectl get pods -A
+NAMESPACE     NAME                               READY   STATUS    RESTARTS   AGE
+kube-system   coredns-74ff55c5b-hjfct            1/1     Running   0          40s
+kube-system   etcd-minikube                      0/1     Running   0          50s
+kube-system   kindnet-9g6bn                      1/1     Running   0          40s
+kube-system   kube-apiserver-minikube            1/1     Running   0          50s
+kube-system   kube-controller-manager-minikube   0/1     Running   0          50s
+kube-system   kube-proxy-fkmjz                   1/1     Running   0          40s
+kube-system   kube-scheduler-minikube            0/1     Running   0          50s
+kube-system   storage-provisioner                1/1     Running   0          55s
+</code></pre></li></ol></article><section class=post-nav><ul><li><a href=https://www.hallajs.net/posts/2021-02-03-migrated-back-to-hallajs-net/><i class="fa fa-chevron-circle-left"></i> Moving back to hallajs.net</a></li></ul></section></main><footer><h6>|
+Rendered by <a href=https://gohugo.io title=Hugo>Hugo</a> |
+<a href=https://www.hallajs.netindex.xml>Subscribe</a></h6></footer></div><script src=/js/scripts.js></script></body></html>
