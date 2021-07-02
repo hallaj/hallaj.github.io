@@ -4,7 +4,7 @@ baseURL = "https://www.hallajs.net"
 languageCode = "en-us"
 title = "hallajs.net"
 paginate = 3
-theme = "hugo-kiera"
+theme = "paper"
 
 ## theme configuration
 pygmentsCodeFences = true
